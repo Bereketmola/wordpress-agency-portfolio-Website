@@ -118,7 +118,11 @@ class Nested_Document_Assets {
 
 			if ( ! empty( $element['settings']['elementskit_nav_menu'] ) ) {
 				foreach ( $this->get_nav_menu_items( $element['settings']['elementskit_nav_menu'] ) as $menu_item ) {
-					$widget_area_keys[] = 'megamenu-menuitem' . $menu_item->ID;
+					if ( ! is_object( $menu_item ) || empty( $menu_item->ID ) ) {
+						continue;
+					}
+
+					$widget_area_keys[] = 'megamenu-menuitem' . absint( $menu_item->ID );
 				}
 			}
 
@@ -203,12 +207,14 @@ class Nested_Document_Assets {
 		$cache_key = is_scalar( $menu ) ? (string) $menu : md5( wp_json_encode( $menu ) );
 
 		if ( ! isset( $this->nav_menu_items_cache[ $cache_key ] ) ) {
-			$this->nav_menu_items_cache[ $cache_key ] = (array) wp_get_nav_menu_items( $menu );
+			$menu_items = wp_get_nav_menu_items( $menu );
+			$this->nav_menu_items_cache[ $cache_key ] = is_array( $menu_items )
+				? array_filter( $menu_items, 'is_object' )
+				: array();
 		}
-
 		return $this->nav_menu_items_cache[ $cache_key ];
 	}
-
+	
 	/**
 	 * Resolve saved Widget Area and Mega Menu documents linked by the element tree.
 	 * @since 4.0.3
